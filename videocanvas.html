@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>MediaRecorder使用示例</title>
+</head>
+<style>
+    canvas {
+        box-shadow: 0 0 10px gray;
+        display: block;
+    }
+</style>
+<h3 style="text-align: center;margin-top:10px;">MediaRecorder使用示例</h3>
+<p style="text-align: center;margin-top:10px;color:grey">点击画布在视频上作画<button id="clearBtn">清除笔迹</button></p>
+<div style="text-align: center;margin-top:10px;">
+    <canvas id="canvas" height=360 width=640 style="width:640px;margin:auto;"></canvas>
+    <video src="./video.mp4" id="srcvideo" autoplay=true style="display:none;"></video>
+</div>
+<div style="text-align: center;margin-top:10px;">
+    <button id="startBtn" disabled>开始录制</button>
+    <button id="pauseBtn" disabled>暂停录制</button>
+    <button id="resumeBtn" disabled>恢复录制</button>
+    <button id="stopBtn" disabled>结束录制</button>
+</div>
+<div style="text-align: center;margin-top:20px;">
+    <p>切换录制编码格式</p>
+    <p><input type="radio" name="format" value="video/webm;codecs=vp8" onclick="setFormatSelect('video/webm;codecs=vp8')">video/webm;codecs=vp8</p>
+    <p><input type="radio" name="format" value="video/webm;codecs=vp9" onclick="setFormatSelect('video/webm;codecs=vp9')" checked="checked">video/webm;codecs=vp9</p>
+    <p><input type="radio" name="format" value="video/webm;codecs=h264" onclick="setFormatSelect('video/webm;codecs=h264')">video/webm;codecs=h264</p>
+    <p><input type="radio" name="format" value="video/webm;codecs=avc1" onclick="setFormatSelect('video/webm;codecs=avc1')">video/webm;codecs=avc1</p>
+    <p><input type="radio" name="format" value="video/x-matroska;codecs=avc1" onclick="setFormatSelect('video/x-matroska;codecs=avc1')">video/x-matroska;codecs=avc1</p>
+</div>
+<div style="margin-top:50px;text-align: center;font-size:14px;">view source: <a href="https://github.com/wendychengc/media-recorder-video-canvas/tree/master" target="_blank">https://github.com/wendychengc/video-color-picker/tree/master</a></div>
+
+
+<script>
+    var allChunks = [];
+    var mousex = 0;
+    var mousey = 0;
+    var drawArray = [];
+
+    init();
+
+    function init() {
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        var srcvideo = document.getElementById("srcvideo")
+        document.body.onmousedown = e => {
+            srcvideo.play()
+            playCanvas(srcvideo, ctx)
+        }
+        clearBtn.onclick = e => {drawArray=[]}
+        canvas.onmousemove = e => {
+            const {
+                top,
+                left
+            } = canvas.getBoundingClientRect();
+            mousex = e.clientX - left;
+            mousey = e.clientY - top;
+        };
+        canvas.onmousedown = e => {
+            const {
+                top,
+                left
+            } = canvas.getBoundingClientRect();
+            var downx = e.clientX - left;
+            var downy = e.clientY - top;
+            drawArray.push({
+                x: downx,
+                y: downy
+            })
+        };
+        setRecorder();
+        setFormatSelect('video/webm;codecs=vp9')
+    }
+
+    function playCanvas(srcvideo, ctx) {
+        ctx.drawImage(srcvideo, 0, 0, 640, 360)
+        for (var i = 0; i < drawArray.length; i++) {
+            ctx.beginPath();
+            const xFraction = drawArray[i].x / 640;
+            const yFraction = drawArray[i].y / 360;
+            const r = 255 * (1 - xFraction);
+            const g = 255 * yFraction;
+            const b = 255 * xFraction * (1 - yFraction);
+            ctx.fillStyle = `rgba(${r|0}, ${g|0}, ${b|0}, 1)`;
+            ctx.arc(drawArray[i].x, drawArray[i].y, 10, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        requestAnimationFrame(() => {
+            playCanvas(srcvideo, ctx)
+        })
+    }
+
+    function setFormatSelect(format){
+        if(!MediaRecorder.isTypeSupported(format)){
+            alert(format)
+            alert("当前浏览器不支持该编码类型");
+            return;
+        }
+        allChunks = [];
+        setRecorder(format)
+    }
+
+
+    function setRecorder(format) {
+        const stream = canvas.captureStream(60); // 60 FPS recording
+        const recorder = new MediaRecorder(stream, {
+            mimeType: format
+        });
+        recorder.ondataavailable = e => {
+            allChunks.push(
+                e.data
+            );
+        }
+
+        startBtn.disabled = false;
+        startBtn.onclick = e => {
+            recorder.start(10);
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            resumeBtn.disabled = true;
+            stopBtn.disabled = false;
+        }
+        stopBtn.onclick = e => {
+            recorder.stop();
+            blobDownload(format);
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            resumeBtn.disabled = true;
+            stopBtn.disabled = true;
+        }
+
+        pauseBtn.onclick = e => {
+            recorder.pause();
+            pauseBtn.disabled = true;
+            resumeBtn.disabled = false;
+        }
+        resumeBtn.onclick = e => {
+            recorder.resume();
+            pauseBtn.disabled = false;
+            resumeBtn.disabled = true;
+        }
+
+
+    }
+
+    function blobDownload(format) {
+        const link = document.createElement('a');
+        link.style.display = 'none';
+        const fullBlob = new Blob(allChunks);
+        const downloadUrl = window.URL.createObjectURL(fullBlob);
+        link.href = downloadUrl;
+        link.download = 'media - '+format+'.mp4';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }
+</script>
