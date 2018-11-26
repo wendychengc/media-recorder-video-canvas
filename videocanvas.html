@@ -31,7 +31,11 @@
     <p><input type="radio" name="format" value="video/webm;codecs=avc1" onclick="setFormatSelect('video/webm;codecs=avc1')">video/webm;codecs=avc1</p>
     <p><input type="radio" name="format" value="video/x-matroska;codecs=avc1" onclick="setFormatSelect('video/x-matroska;codecs=avc1')">video/x-matroska;codecs=avc1</p>
 </div>
-<div style="margin-top:50px;text-align: center;font-size:14px;">view source: <a href="https://github.com/wendychengc/media-recorder-video-canvas/tree/master" target="_blank">https://github.com/wendychengc/video-color-picker/tree/master</a></div>
+
+<div style="text-align: center;margin-top:20px;">
+    <p><input type="checkbox" name="showconsole" onclick="setShowConsole(this)">是否在控制台显示ondataavailable</p>
+</div>
+<div style="margin-top:50px;text-align: center;font-size:14px;">view source: <a href="https://github.com/wendychengc/media-recorder-video-canvas/tree/master" target="_blank">https://github.com/wendychengc/media-recorder-video-canvas/tree/master</a></div>
 
 
 <script>
@@ -39,6 +43,7 @@
     var mousex = 0;
     var mousey = 0;
     var drawArray = [];
+	var showDataAvailable = false;
 
     init();
 
@@ -103,7 +108,14 @@
         allChunks = [];
         setRecorder(format)
     }
-
+	
+	function setShowConsole(checkbox){
+		if ( checkbox.checked == true){
+			showDataAvailable = true;
+		}else{
+			showDataAvailable = false;
+		}
+	}
 
     function setRecorder(format) {
         const stream = canvas.captureStream(60); // 60 FPS recording
@@ -111,6 +123,9 @@
             mimeType: format
         });
         recorder.ondataavailable = e => {
+			if(showDataAvailable){
+				console.log("trigger ondataavailable")
+			}
             allChunks.push(
                 e.data
             );
