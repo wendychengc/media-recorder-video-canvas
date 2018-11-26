@@ -14,7 +14,7 @@
 <h3 style="text-align: center;margin-top:10px;">MediaRecorder使用示例 - 摄像头版本</h3>
 <p style="text-align: center;margin-top:10px;color:grey">点击画布在视频上作画<button id="clearBtn">清除笔迹</button></p>
 <div style="text-align: center;margin-top:10px;">
-    <canvas id="canvas" height=360 width=640 style="width:640px;margin:auto;"></canvas>
+    <canvas id="canvas" height=460 width=640 style="width:640px;margin:auto;"></canvas>
     <video src="" id="srcvideo" style="display:none;"></video>
 </div>
 <div style="text-align: center;margin-top:10px;">
@@ -31,7 +31,7 @@
     <p><input type="radio" name="format" value="video/webm;codecs=avc1" onclick="setFormatSelect('video/webm;codecs=avc1')">video/webm;codecs=avc1</p>
     <p><input type="radio" name="format" value="video/x-matroska;codecs=avc1" onclick="setFormatSelect('video/x-matroska;codecs=avc1')">video/x-matroska;codecs=avc1</p>
 </div>
-<div style="margin-top:50px;text-align: center;font-size:14px;">view source: <a href="https://github.com/wendychengc/media-recorder-video-canvas/tree/master" target="_blank">https://github.com/wendychengc/video-color-picker/tree/master</a></div>
+<div style="margin-top:50px;text-align: center;font-size:14px;">view source: <a href="https://github.com/wendychengc/media-recorder-video-canvas/tree/master" target="_blank">https://github.com/wendychengc/media-recorder-video-canvas/tree/master</a></div>
 
 
 <script>
@@ -85,11 +85,11 @@
     }
 
     function playCanvas(srcvideo, ctx) {
-        ctx.drawImage(srcvideo, 0, 0, 640, 360)
+        ctx.drawImage(srcvideo, 0, 0, 640, 460)
         for (var i = 0; i < drawArray.length; i++) {
             ctx.beginPath();
             const xFraction = drawArray[i].x / 640;
-            const yFraction = drawArray[i].y / 360;
+            const yFraction = drawArray[i].y / 460;
             const r = 255 * (1 - xFraction);
             const g = 255 * yFraction;
             const b = 255 * xFraction * (1 - yFraction);
